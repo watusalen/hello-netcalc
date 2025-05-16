@@ -62,6 +62,20 @@ export class CNETRequest implements IMessageRequest {
     }
 
     /**
+    * Extrai o valor de uma chave específica de um array de linhas.
+    * @param lines Array de strings (linhas)
+    * @param key Chave a ser buscada
+    * @returns Valor associado à chave
+    */
+    extractValue(lines: Array<String>, key: string): string {
+        const line = lines.find(line => line.startsWith(key));
+        if (line) {
+            return line.split(":")[1].trim();
+        }
+        throw new Error(`Chave ${key} não encontrada na requisição.`);
+    }
+
+    /**
      * Serializa a requisição para string no formato do protocolo.
      * @returns String representando a requisição
      */
@@ -71,6 +85,54 @@ export class CNETRequest implements IMessageRequest {
             `OPERAND1:${this.operand1}`,
             `OPERAND2:${this.operand2}`
         ].join('\n');
+    }
+}
+
+export class CNETResponse implements IMessageResponse {
+    /** Resultado da operação enviada pelo servidor (ex: 5, 10, etc.) */
+    result: string;
+    /** Status da operação (ex: OK, ERROR) */
+    status: string;
+    /** Mensagem adicional (ex: "Operação realizada com sucesso") */
+    message: string;
+
+    /**
+     * Cria uma nova resposta CNET.
+     * @param result Resultado da operação
+     * @param status Status da operação (ex: OK, ERROR)
+     * @param message Mensagem adicional
+     */
+    constructor(result: string, status: string, message: string) {
+        this.result = result;
+        this.status = status;
+        this.message = message;
+        this.validate();
+    }
+
+    /**
+     * Constrói uma nova instância a partir de uma string bruta no formato do protocolo.
+     * @param response String contendo a resposta
+     * @returns Nova instância de CNETResponse
+     */
+    fromString(response: string): IMessageResponse {
+        const lines: Array<string> = response.split("\n");
+        const result: string = this.extractValue(lines, "RESULT");
+        const status: string = this.extractValue(lines, "STATUS");
+        const message: string = this.extractValue(lines, "MESSAGE");
+        return new CNETResponse(result, status, message);
+    }
+
+    /**
+     * Valida os campos da resposta.
+     * Lança exceção se algum campo estiver inválido.
+     */
+    validate(): void {
+        if (!this.result || !this.status || !this.message) {
+            throw new Error("Resposta inválida: resultado, status e mensagem são obrigatórios.");
+        }
+        if (this.status !== "OK" && this.status !== "ERROR") {
+            throw new Error(`Resposta inválida: status ${this.status} não é válido.`);
+        }
     }
 
     /**
@@ -84,27 +146,19 @@ export class CNETRequest implements IMessageRequest {
         if (line) {
             return line.split(":")[1].trim();
         }
-        throw new Error(`Chave ${key} não encontrada na requisição.`);
-    }
-}
-
-export class CNETResponse implements IMessageResponse {
-    result: string;
-    status: string;
-    message: string;
-
-    extractValue(lines: Array<String>, key: string): string {
-        throw new Error("Method not implemented.");
+        throw new Error(`Chave ${key} não encontrada na resposta.`);
     }
 
-    fromString(response: string): IMessageResponse {
-        throw new Error("Method not implemented.");
-    }
-    validate(): boolean {
-        throw new Error("Method not implemented.");
-    }
+    /**
+     * Serializa a requisição para string no formato do protocolo.
+     * @returns String representando a requisição
+     */
     toString(): string {
-        throw new Error("Method not implemented.");
+        return [
+            `RESULT:${this.result}`,
+            `STATUS:${this.status}`,
+            `MESSAGE:${this.message}`
+        ].join('\n');
     }
 
 }
