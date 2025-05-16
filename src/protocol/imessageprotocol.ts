@@ -10,7 +10,10 @@ export interface IMessageRequest {
   fromString(request: string): IMessageRequest;
 
   /** Valida campos; retorna true se tudo OK */
-  validate(): boolean;
+  validate(): void;
+
+  /** Extrai o valor de uma chave específica de um array de linhas */
+  extractValue(lines: Array<String>, key: string): string;
 
   /** Serializa para string no formato do protocolo */
   toString(): string;
@@ -28,7 +31,10 @@ export interface IMessageResponse {
   fromString(response: string): IMessageResponse;
 
   /** Valida campos; retorna true se tudo OK */
-  validate(): boolean;
+  validate(): void;
+
+
+  extractValue(array: Array<String>, key: string): string;
 
   /** Serializa para string no formato do protocolo */
   toString(): string;
